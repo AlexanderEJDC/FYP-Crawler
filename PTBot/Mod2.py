@@ -1,14 +1,5 @@
-import logging
-import asyncio
-import telegram
 from telegram import Update
 from telegram.ext import MessageHandler, filters, ApplicationBuilder, ContextTypes
-
-#Configure Logging module - use level=logging.DEBUG for more verbose info.
-#logging.basicConfig(
-#    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-#    level=logging.DEBUG
-#)
 
 #Reads any messages in an update
 async def ReadAllMsgs(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -18,6 +9,7 @@ async def ReadAllMsgs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 #Grabs a file from any update
 async def GrabFile(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    #Assign the file to a new variable, await an update from any effective message
     incom_file = await update.effective_message.effective_attachment.get_file()
     await incom_file.download_to_drive('recieved_file')
     print("File recieved!") 
