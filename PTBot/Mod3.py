@@ -6,6 +6,7 @@ import re
 
 mainDirectory = "/home/alexander/FYP-Crawler GitRepo/FYP-Crawler/Data"
 
+
 #Series of functions to create the relevant files in the data folder. 
 
 def appendTxt(titleOfRoom, message):
@@ -34,7 +35,6 @@ def fileCheckConditional(roomTitle, message):
     elif checkFileExsits(roomTitle) == False:
         makeTxt(roomTitle)
         appendTxt(roomTitle, message)
-
 """
     Now for URLS! 
     Could this be more efficient and be merged? Yes.
@@ -72,26 +72,29 @@ def checkUpdateType(update):
     if update.effective_chat.type == "private":
         return update.effective_chat.first_name
     else: 
-        return update.effective_chat.title
-
+        return update.effective_chat.title 
+    
 #Scan for a URL in a message
 def URLScanMessage(message):
-    URLs = re.findall(r'(https?://[^\s]+)', message)
+    URLs = re.findall(r'(https?://[^\s]+)',message)
     if URLs: #If there was a URL in the message
         return True, URLs #Return true and the list
     else: #Else assume no URLs, return false and the empty list
         return False, URLs
 
-    """
+
+"""
     TODO: 
     Check if a DM or a group/channel update! CHECK
-    Check for URL in messages! 
-    Finish VTScripts!
-    Setup asyncio communication with VT
-    """
+    Check for URL in messages! CHECK
+    Grab entire chat history! NOT POSSIBLE - BOTS DON'T HAVE ACCESS
+    Finish VTScripts! CHECK
+    Add report storage for VT hashes
+"""
 
 #Reads any messages in an update
 async def ReadAllMsgs(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print(update)
     message = update._effective_message.text
     print(message)
     roomTitle = checkUpdateType(update)
@@ -99,20 +102,18 @@ async def ReadAllMsgs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     fileCheckConditional(roomTitle,message)
     bool, urlList = URLScanMessage(message)
     if bool == True:
-        for item in urlList:
+        for item in urlList: 
             URLCheckConditional(roomTitle,item)
-    else:
-        print("Do Nothing")
+    else: #Assume bool is false, dead end.
+        return 0
 
 #Grabs a file from any update
 async def GrabFile(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    #Assign the file to a new variable, await an update from any effective message
-    incom_file = await update.effective_message.effective_attachment.get_file()
-    await incom_file.download_to_drive('recieved_file')
+    fileHeader = checkUpdateType(update) #Get the channel name where its from
+    incom_file = await update.effective_message.effective_attachment.get_file() 
+    pathToFile = '/home/alexander/FYP-Crawler GitRepo/FYP-Crawler/Data/Files/'+fileHeader+"_"+incom_file.file_id
+    await incom_file.download_to_drive(custom_path=f'{pathToFile}')
     print("File recieved!") 
-
-async def ExportHistory():
-    print("History Exported!")
 
 #Boilerplate to stop script running when imported
 if __name__ == '__main__':
