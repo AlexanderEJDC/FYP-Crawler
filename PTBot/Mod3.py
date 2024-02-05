@@ -3,9 +3,31 @@ from telegram.ext import MessageHandler, filters, ApplicationBuilder, ContextTyp
 
 import os
 import re
+import vt
 
 mainDirectory = "/home/alexander/FYP-Crawler GitRepo/FYP-Crawler/Data"
+VT_API_KEY = "4206453d8d313a93b6660e2287494cef879cf7348d2af8b3b8884a260d1f7b8e"
 
+#VirusTotal Functions
+
+async def mainFileUpload(API_KEY, filePath):
+#Section to upload hashes to VT
+    async with vt.Client(API_KEY) as client: #Setup client
+        with open(filePath) as f: #Find the file, encode as utf8
+            analysis = await client.scan_file_async(file=f) #Grab the analysis with the file scan
+            print(f"File {filePath} uploaded.") #Show the file was uploaded to VT
+        
+        #Wait to get the analysis, then print the stats
+        finAnalysis = await client.wait_for_analysis_completion(analysis)
+        print(f"{filePath}: {finAnalysis.stats}")
+        print(f"analysis id: {finAnalysis.id}")
+
+async def mainURLScan(API_KEY, URL_link):
+    #Send URL to scan
+    async with vt.Client(API_KEY) as client:
+        url_analysis = await client.scan_url_async(URL_link)
+        finURL_Analysis = await client.wait_for_analysis_completion(url_analysis)
+        print(f"{URL_link}: {finURL_Analysis.stats}")
 
 #Series of functions to create the relevant files in the data folder. 
 
@@ -104,6 +126,8 @@ async def ReadAllMsgs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if bool == True:
         for item in urlList: 
             URLCheckConditional(roomTitle,item)
+            print("URL added to list")
+            await mainURLScan(VT_API_KEY, item)
     else: #Assume bool is false, dead end.
         return 0
 
@@ -113,10 +137,14 @@ async def GrabFile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     incom_file = await update.effective_message.effective_attachment.get_file() 
     pathToFile = '/home/alexander/FYP-Crawler GitRepo/FYP-Crawler/Data/Files/'+fileHeader+"_"+incom_file.file_id
     await incom_file.download_to_drive(custom_path=f'{pathToFile}')
-    print("File recieved!") 
+    print("File recieved!")
+
+    await mainFileUpload(VT_API_KEY, pathToFile)
+    print("Sent to VT") 
 
 #Boilerplate to stop script running when imported
 if __name__ == '__main__':
+
     #Application builder. On its own, doesn't do anything.
     application = ApplicationBuilder().token(
        '6460026166:AAFf7Wv93Cpa9YUFtsZ0E-AJfmFgKGDx_1s').build()
